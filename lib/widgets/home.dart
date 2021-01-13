@@ -13,50 +13,47 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool sex = false;
 
-  DateTime date;
   int age;
 
   double taille = 170.0;
 
-  String poids;
+  double poids;
 
-  int itemSelected;
-
-  List level = ["Faible", "Normale", "Elevée"];
-
-  double multiplicator;
+  double itemSelected;
 
   double total;
 
-  List<Widget> radios() {
+  int base;
+  int activite;
+
+  Row radios() {
     List<Widget> l = [];
-    for(int x = 0; x < level.length; x++) {
+    activities.forEach((key, value) {
       Column column = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Radio(value: x,
-              activeColor: sex == false ? Colors.pink : Colors.blue,
-              groupValue: itemSelected,
-              onChanged: (int i) {
-                setState(() {
-                  itemSelected = i;
-                  multiplicator = level2[level[i]];
-                });
-              }
+          Radio(
+            value: value,
+            groupValue: itemSelected,
+            activeColor: setcolor(),
+            onChanged: (Object i) {
+              setState(() {
+                itemSelected = i;
+              });
+            }
           ),
-          Text(level[x],
-            style: TextStyle(
-                color: sex == false ? Colors.pink : Colors.blue
-            ),
-          ),
+          textWithStyle(key, color: setcolor()),
         ],
       );
       l.add(column);
-    }
-    return l;
+    });
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: l,
+    );
   }
 
-  Map level2 = {
+  Map activities = {
     'Faible': 1.2,
     'Normale': 1.5,
     'Elevée': 1.8
@@ -71,19 +68,14 @@ class _MyHomePageState extends State<MyHomePage> {
       },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: setcolor(),
           title: Text(widget.title),
         ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                "Remplissez tous les champs pour obtenir votre besoin quotidien en calories",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18.0,
-                  color: Colors.black87,
-                ),
+              textWithStyle("Remplissez tous les champs pour obtenir votre besoin quotidien en calories",
               ),
               Container(
                 padding: EdgeInsets.all(10.0),
@@ -96,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Text('Femme'),
+                              textWithStyle('Femme', color: Colors.pink),
                               Switch(
                                   inactiveTrackColor: Colors.pink,
                                   inactiveThumbColor: Colors.pink,
@@ -108,24 +100,24 @@ class _MyHomePageState extends State<MyHomePage> {
                                     });
                                   }
                               ),
-                              Text('Homme'),
+                              textWithStyle('Homme', color: Colors.blue)
                             ],
                           ),
                           RaisedButton(
                               onPressed: chooseDate,
-                              color: sex == false ? Colors.pink : Colors.blue,
+                              color: setcolor(),
                               textColor: Colors.white,
-                              child: date == null ? Text('Indiquez votre âge') : Text("Votre age est de : $age ans")
+                              child: age == null ? Text('Indiquez votre âge') : Text("Votre age est de : $age ans")
                           ),
                           Padding(padding: EdgeInsets.only(top: 20.0)),
                           Text('Votre taille est de : $taille cm',
                             style: TextStyle(
-                                color: sex == false ? Colors.pink : Colors.blue
+                                color: setcolor()
                             ),
                           ),
                           Slider(
                               value: taille,
-                              activeColor: sex == false ? Colors.pink : Colors.blue,
+                              activeColor: setcolor(),
                               divisions: 80,
                               min: 170.0,
                               max: 250.0,
@@ -139,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             keyboardType: TextInputType.number,
                             onSubmitted: (String string) {
                               setState(() {
-                                poids = string;
+                                poids = double.parse(string);
                               });
                             },
                             decoration: InputDecoration(
@@ -151,14 +143,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           Text(
                             "Quelle est votre activité sportive ?",
                             style: TextStyle(
-                              color: sex == false ? Colors.pink : Colors.blue,
+                              color: setcolor(),
                             ),
                           ),
                           Padding(padding: EdgeInsets.only(top: 20.0)),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: radios(),
-                          )
+                          radios(),
                         ],
                       ),
                       Padding(padding: EdgeInsets.only(top: 20.0)),
@@ -169,7 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
               RaisedButton(
                   child: Text("Calculez votre besoin"),
                   textColor: Colors.white,
-                  color: sex == false ? Colors.pink : Colors.blue,
+                  color: setcolor(),
                   onPressed: calculCalories
               ),
             ],
@@ -187,19 +176,78 @@ class _MyHomePageState extends State<MyHomePage> {
         firstDate: DateTime(1950),
         lastDate: DateTime(2050));
     if (choice != null) {
+      var difference = DateTime.now().difference(choice);
+      var days = difference.inDays;
+      var years = days / 365.25;
       setState(() {
-        date = choice;
-        age = DateTime.now().year - date.year;
+        age = years.toInt();
       });
     }
   }
 
   void calculCalories() {
-    if (sex == true) {
-      total = multiplicator * 66.4730 + (13.7516 * double.parse(poids)) + (5.0033 * taille) - (6.7550 * age.toDouble());
+    if (poids != null && taille != null && itemSelected != null) {
+      sex == true ? base = (66.4730 + (13.7516 * poids) + (5.0033 * taille) - (6.7550 * age)).toInt() : base = (655.0955 + (9.5634 * poids) + (1.8496 * taille) - (4.6756 * age)).toInt();
+      activite = (base * itemSelected).toInt();
+      calcul();
     } else {
-      total = multiplicator * 655.0955 + (9.5634 * double.parse(poids)) + (1.8496 * taille) - (4.6756 * age.toDouble());
+      alert();
     }
-    print(total);
+  }
+
+  Future<Null> calcul() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: textWithStyle('Calcul', fontSize: 20.0),
+          content: textWithStyle("Votre montant de calorie de base est de : $base kcal "
+              "\n Votre montant de calorie avec activité est de : $activite kcal"),
+          actions: [
+            FlatButton(
+              color: setcolor(),
+              onPressed: () => Navigator.pop(context),
+              child: textWithStyle('Retour', color: Colors.white))
+          ],
+        );
+      }
+    );
+  }
+
+  Future<Null> alert() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: textWithStyle('Erreur'),
+          content: textWithStyle('Tous les champs ne sont pas remplis'),
+          actions: [
+            FlatButton(
+              color: setcolor(),
+              onPressed: () => Navigator.pop(context),
+              child: textWithStyle("Retour", color: Colors.white)
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  Text textWithStyle(String data, {color: Colors.black87, factor: 1.0, fontSize: 15.0}) {
+    return Text(
+        data,
+        textScaleFactor: factor,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: color,
+          fontSize: fontSize
+        )
+    );
+  }
+
+  Color setcolor() {
+    return sex == false ? Colors.pink : Colors.blue;
   }
 }
